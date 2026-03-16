@@ -1,5 +1,5 @@
 """
-CodeReview Agent — Specialized AI agent for automated, opinionated code review.
+QuestAgent — Specialized AI agent for automated, opinionated code analysis.
 Detects bugs, security vulnerabilities, performance anti-patterns, and style drift.
 Powered by Groq (free tier at console.groq.com).
 """
@@ -17,7 +17,7 @@ client = Groq(api_key=os.environ["GROQ_API_KEY"])
 MODEL = "llama-3.3-70b-versatile"   # fast + free on Groq
 
 # ── System prompt ─────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are CodeReview Agent — an expert AI code reviewer with deep knowledge of
+SYSTEM_PROMPT = """You are QuestAgent — an expert AI software quality reviewer with deep knowledge of
 software engineering best practices, security vulnerabilities, and performance optimization.
 
 Your specialization:
@@ -118,7 +118,7 @@ def _detect_language(path: str) -> str:
 
 def main() -> None:
     print("╔══════════════════════════════════════════╗")
-    print("║       CodeReview Agent  v1.0.0           ║")
+    print("║         QuestAgent  v1.0.0               ║")
     print("║  Paste code · Drop a file path · Chat    ║")
     print("╚══════════════════════════════════════════╝")
     print('Type "exit" to quit | "reset" to clear history | "file <path>" to review a file\n')

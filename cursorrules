@@ -1,8 +1,8 @@
-# .cursorrules — CodeReview Agent
+# .cursorrules — QuestAgent
 # Cursor will load these rules into every AI interaction inside this project.
 
 ## Project identity
-This is **CodeReview Agent**, a specialised AI agent for automated code review.
+This is **QuestAgent**, a specialised AI agent for automated code analysis.
 Primary language: Python 3.11+.
 Entry point: `src/agent.py`
 Test suite: `tests/`

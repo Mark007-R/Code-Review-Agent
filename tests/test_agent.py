@@ -1,5 +1,5 @@
 """
-Tests for CodeReview Agent.
+Tests for QuestAgent.
 All Anthropic API calls are mocked — no real API keys needed.
 """
 

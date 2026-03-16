@@ -1,355 +1,191 @@
-# 🔍 CodeReview Agent
+# QuestAgent - CodeReview Agent
 
-> An opinionated, multi-turn AI agent specialised in automated code review — built on the Anthropic Messages API and Cursor-ready out of the box.
+QuestAgent is a specialized AI code review assistant built in Python.
+It reviews pasted code or full files, returns structured findings, and can be used from both:
 
----
+- A CLI chat loop
+- A FastAPI web UI
 
-## Table of Contents
+The project also includes a benchmark module and a pytest test suite.
 
-1. [What Problem This Solves](#1-what-problem-this-solves)
-2. [Why This Problem Was #1 Priority](#2-why-this-problem-was-1-priority)
-3. [Quick Start](#3-quick-start)
-4. [Cursor Setup](#4-cursor-setup)
-5. [Agent Architecture](#5-agent-architecture)
-6. [Performance Score: 7,340 / 10,000](#6-performance-score-7340--10000)
-7. [Benchmark: CodeReview Agent vs Default Cursor Claude](#7-benchmark-codereview-agent-vs-default-cursor-claude)
-8. [Security](#8-security)
-9. [Usage Examples](#9-usage-examples)
-10. [Design Decisions](#10-design-decisions)
-11. [Contributing](#11-contributing)
+## What it does
 
----
+- Detects common bug patterns (off-by-one, mutable defaults, race windows)
+- Flags security issues (injection patterns, hardcoded secrets)
+- Highlights performance risks (N+1-like access patterns)
+- Provides style and test-related review guidance
+- Returns responses in a structured JSON-friendly format (when prompted)
 
-## 1. What Problem This Solves
+## Tech stack
 
-Code review is one of the highest-leverage engineering activities — yet it's also one of the most inconsistently performed. The same team that rigorously reviews a payment-processing PR will wave through a utility script with a hard-coded secret and an off-by-one error.
+- Python 3.11+
+- Groq SDK (`groq`)
+- FastAPI + Uvicorn (web backend/UI serving)
+- python-dotenv (environment loading)
+- pytest + pytest-mock (tests)
 
-**CodeReview Agent** closes this gap by providing:
+## Project structure
 
-| Capability | Description |
-|---|---|
-| 🐛 Bug Detection | Logic errors, off-by-ones, null dereferences, race conditions |
-| 🔒 Security Audit | SQL injection, secret leakage, auth bypass, known CVE patterns |
-| ⚡ Performance | N+1 queries, O(n²) loops, memory leaks, unnecessary re-renders |
-| 🏗️ Design | SOLID violations, naming, duplication, dead code |
-| 🧪 Test Coverage | Missing edge cases, brittle fixtures, untested error paths |
+```text
+QuestAgent/
+  src/
+    agent.py          # Core chat/review logic (Groq client + conversation history)
+    benchmark.py      # Evaluation suite with weighted scoring (0-10,000)
+  ui/
+    server.py         # FastAPI app bridging browser UI to the agent
+    static/
+      index.html      # Frontend UI
+  tests/
+    test_agent.py     # Unit tests for agent + benchmark behavior
+  example/
+    bad_code.py       # Intentionally vulnerable code sample
+  requirements.txt
+  .env.example
+  cursorrules
+```
 
-Unlike a generic chat interface, this agent:
-- Returns **structured JSON** every time (parseable by CI pipelines, dashboards, etc.)
-- Maintains **multi-turn conversation history** so you can ask follow-up questions
-- Supports **direct file review** via `file <path>` at the CLI
-- Is **Cursor-native** — the `.cursorrules` file teaches Cursor the project conventions so AI-assisted edits stay consistent
+## Setup
 
----
+1. Create and activate a virtual environment.
 
-## 2. Why This Problem Was #1 Priority
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-Three reasons this sits at the top of the list:
+2. Install dependencies.
 
-**1. Universal applicability.** Every software team reviews code. A specialised code-review agent is immediately useful to any engineering organisation, regardless of stack or domain.
-
-**2. High cost of missed bugs.** A bug caught in review costs roughly 10× less to fix than one found in staging, and 100× less than one found in production (IBM System Science Institute). An agent that improves review thoroughness has a measurable, quantifiable ROI.
-
-**3. Structured output unlocks automation.** A generic assistant gives prose feedback. An agent that returns machine-readable JSON can be wired into a GitHub Actions workflow, a Slack bot, a dashboard, or a custom IDE extension. This is the difference between a tool and a platform.
-
----
-
-## 3. Quick Start
-
-```bash
-# 1. Clone
-git clone https://github.com/your-username/quest-agent.git
-cd quest-agent
-
-# 2. Install dependencies
+```powershell
 pip install -r requirements.txt
+```
 
-# 3. Configure your API key
-cp .env.example .env
-# Edit .env and set ANTHROPIC_API_KEY=sk-...
+3. Configure environment variables.
 
-# 4. Run the agent
+- Copy `.env.example` to `.env`
+- Set your own Groq API key
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Expected variable:
+
+```text
+GROQ_API_KEY=your_groq_api_key
+```
+
+## Run the CLI agent
+
+```powershell
 python src/agent.py
 ```
 
-### Review a file directly
+CLI commands:
 
-```
-You: file examples/bad_code.py
-Agent: { "summary": "7 issues found — 2 critical", ... }
-```
+- `exit` -> quit
+- `reset` -> clear conversation history
+- `file <path>` -> review a file from disk
 
-### Paste code inline
+Example:
 
-```
-You: Review this Python function:
-     def divide(a, b):
-         return a / b
-
-Agent: { "summary": "Missing ZeroDivisionError handling", "score": 55, ... }
+```text
+You: file example/bad_code.py
+You: Review this function: def divide(a, b): return a / b
 ```
 
-### Run the benchmark
+## Run the web UI
 
-```bash
+Start backend:
+
+```powershell
+uvicorn ui.server:app --reload --port 8000
+```
+
+Open:
+
+- http://localhost:8000
+
+Main API routes:
+
+- `GET /` -> serves UI
+- `POST /chat` -> sends free-form message to agent
+- `POST /review-file` -> reviews a local file path
+- `POST /reset` -> clears conversation history
+- `GET /history` -> returns in-memory chat history
+- `GET /health` -> health/model/provider info
+
+## Run benchmark
+
+```powershell
 python src/benchmark.py
 ```
 
-### Run tests
+Benchmark summary:
 
-```bash
+- Uses 5 planted test cases:
+  - SQL Injection
+  - Hardcoded Secret
+  - Off-by-one Loop
+  - N+1 Query
+  - Race Condition
+- Scores across weighted dimensions:
+  - accuracy (35%)
+  - relevance (20%)
+  - specificity (20%)
+  - latency (10%)
+  - format (10%)
+  - false positives (5%)
+- Produces a composite score on a 0-10,000 scale
+
+## Run tests
+
+```powershell
 pytest -q
 ```
 
----
+## Core modules
 
-## 4. Cursor Setup
+### `src/agent.py`
 
-This project ships with two Cursor configuration files:
+- Initializes Groq client using `GROQ_API_KEY`
+- Uses model: `llama-3.3-70b-versatile`
+- Maintains in-memory `conversation_history`
+- Exposes:
+  - `chat(user_message: str) -> str`
+  - `review_file(file_path: str) -> str`
+  - `score_from_response(response_text: str) -> int | None`
+  - `reset_conversation() -> None`
 
-| File | Purpose |
-|---|---|
-| `.cursorrules` | Project-level rules injected into every Cursor AI prompt |
-| `.cursor/settings.json` | Context files and default model for Cursor AI |
+### `src/benchmark.py`
 
-**Opening in Cursor:**
+- Defines benchmark test suite and evaluation dataclasses
+- Computes per-dimension and composite scores
+- Exposes `run_benchmark(agent_fn)` to evaluate any compatible agent callable
 
-```bash
-cursor .
-```
+### `ui/server.py`
 
-Cursor will automatically load `.cursorrules`. Every AI completion in this project will know:
-- The agent architecture and file layout
-- Coding conventions (typing, docstrings, exception handling)
-- Security rules (no hard-coded secrets, parameterised SQL only)
-- How to extend the benchmark without breaking weight totals
+- Loads the same core agent functions
+- Serves static frontend
+- Provides API endpoints for chat/file review/reset/history/health
 
-No manual setup is required beyond opening the folder.
+## Notes
 
----
+- Conversation history is in-memory only and resets when process restarts.
+- File review uses local filesystem paths passed to the backend.
+- Keep secrets in `.env`; do not commit real API keys.
 
-## 5. Agent Architecture
+## Quick troubleshooting
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    User / CLI / IDE                  │
-└──────────────────────────┬──────────────────────────┘
-                           │  user message
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│               src/agent.py  (chat loop)              │
-│                                                      │
-│  conversation_history: list[Message]                 │
-│  ┌──────────────────────────────────────────────┐   │
-│  │  SYSTEM PROMPT (specialised code reviewer)   │   │
-│  │  • JSON schema enforced                      │   │
-│  │  • 5 review categories                       │   │
-│  │  • Severity scale: critical→low              │   │
-│  └──────────────────────────────────────────────┘   │
-│                          │                           │
-│             Anthropic Messages API                   │
-│             (claude-opus-4-5, max_tokens=8096)       │
-└──────────────────────────┬──────────────────────────┘
-                           │  structured JSON response
-                           ▼
-┌─────────────────────────────────────────────────────┐
-│         src/benchmark.py  (evaluation)               │
-│                                                      │
-│  6 scoring dimensions → weighted composite           │
-│  0 ──────────────────────────────────── 10,000       │
-└─────────────────────────────────────────────────────┘
-```
+- `KeyError: GROQ_API_KEY`
+  - Add `GROQ_API_KEY` in `.env` and restart the process.
 
-**Key design choices:**
-- **Stateful conversation** — history is kept in-process; `reset_conversation()` clears it
-- **Single responsibility per module** — `agent.py` handles I/O; `benchmark.py` handles scoring
-- **No frameworks** — only the Anthropic SDK and standard library; zero magic, easy to extend
+- `ModuleNotFoundError`
+  - Reinstall dependencies with `pip install -r requirements.txt` in the active environment.
 
----
+- UI cannot connect to backend
+  - Ensure Uvicorn is running on port 8000.
+  - Check that requests go to `http://localhost:8000`.
 
-## 6. Performance Score: 7,340 / 10,000
+## License
 
-### Scoring Formula
-
-```
-Composite = Σ (dimension_score × weight) × 10,000
-```
-
-| Dimension | Weight | What It Measures |
-|---|---|---|
-| Accuracy | 35% | % of planted bugs correctly identified |
-| Relevance | 20% | Response stays focused on the submitted code |
-| Specificity | 20% | Cites line numbers, gives concrete code fixes |
-| Latency | 10% | 1.0 at ≤2 s, linear decay to 0.0 at 30 s |
-| Format | 10% | JSON schema validity (4 required keys) |
-| False Positives | 5% | Penalty for findings about non-existent code |
-
-**Weights sum to 1.0.** The formula is implemented in `src/benchmark.py:compute_composite()`.
-
-### Test Suite (5 test cases)
-
-| Test Case | Planted Issues | Score |
-|---|---|---|
-| SQL Injection | `sql_injection`, `no_parameterisation` | 8,200 |
-| Hardcoded Secret | `hardcoded_api_key`, `secret_in_source` | 8,050 |
-| Off-by-one Loop | `off_by_one`, `index_out_of_range` | 7,100 |
-| N+1 Query | `n_plus_1_query`, `missing_prefetch` | 6,800 |
-| Race Condition | `race_condition`, `non_atomic_check_then_act` | 6,490 |
-| **Mean** | | **7,328** |
-
-### How the Score Was Determined
-
-1. Each test case has **ground-truth planted issues** (keywords we expect to appear in the response).
-2. `score_accuracy()` checks for those keywords using an alias map (e.g. "injection", "parameteris").
-3. All six dimension scores are computed, weighted, and summed.
-4. The result is scaled to the 0–10,000 range.
-5. The **final reported score is the mean across all 5 test cases**.
-
-Run `python src/benchmark.py` to reproduce. The mock agent in `__main__` yields ~4,200 (deliberately below average to validate the scale).
-
----
-
-## 7. Benchmark: CodeReview Agent vs Default Cursor Claude
-
-### Head-to-Head Comparison
-
-| Criterion | Default Cursor Claude | CodeReview Agent | Delta |
-|---|---|---|---|
-| **Output format** | Freeform prose | Structured JSON always | ✅ Agent |
-| **Bug detection (SQL injection)** | Usually caught | Always caught + line cited | ✅ Agent |
-| **False positive rate** | ~15% (introduces unrelated advice) | ~5% (scope-controlled) | ✅ Agent |
-| **Security focus** | General, inconsistent | Dedicated audit category | ✅ Agent |
-| **Multi-turn follow-up** | Yes | Yes | Tie |
-| **Performance scoring** | None | 0–10,000 composite | ✅ Agent |
-| **Benchmark reproducibility** | None | Full test suite in `benchmark.py` | ✅ Agent |
-| **Project context awareness** | Good (uses open files) | Good + `.cursorrules` enforcement | ✅ Agent |
-| **General coding help** | Excellent | Not the focus | ✅ Default Cursor |
-| **Latency (first response)** | ~3–6 s | ~4–7 s (heavier system prompt) | ✅ Default Cursor |
-
-### Concrete Example: SQL Injection Review
-
-**Input code:**
-```python
-def get_user(username: str):
-    query = f"SELECT * FROM users WHERE username = '{username}'"
-    return db.execute(query)
-```
-
-**Default Cursor Claude response (typical):**
-> "This function looks straightforward. You might want to add error handling and consider using an ORM for better abstraction. Also, f-strings are a clean way to format strings in Python."
-
-*(Missed the SQL injection entirely.)*
-
-**CodeReview Agent response:**
-```json
-{
-  "summary": "Critical SQL injection vulnerability on line 2.",
-  "score": 15,
-  "severity_breakdown": { "critical": 1, "high": 0, "medium": 1, "low": 0 },
-  "findings": [
-    {
-      "id": "FINDING-001",
-      "severity": "critical",
-      "category": "security",
-      "line": 2,
-      "title": "SQL Injection via string interpolation",
-      "description": "Interpolating user input directly into SQL allows an attacker to escape the query string and execute arbitrary SQL commands.",
-      "suggestion": "Use parameterised queries:\n```python\nreturn db.execute('SELECT * FROM users WHERE username = ?', [username])\n```"
-    }
-  ],
-  "positive_notes": ["Function is short and easy to understand"],
-  "refactor_priority": ["Fix SQL injection before this code goes anywhere near a database"]
-}
-```
-
-**Why the agent wins here:** The specialised system prompt explicitly teaches the agent to look for injection patterns, hard-codes the severity scale, and enforces the JSON schema. A generic assistant optimises for helpfulness broadly; this agent optimises for *security thoroughness specifically*.
-
----
-
-## 8. Security
-
-| Requirement | Implementation |
-|---|---|
-| No secrets in code | `ANTHROPIC_API_KEY` read from `os.environ` only |
-| No `.env` committed | `.gitignore` excludes `.env`; `.env.example` is the template |
-| No hard-coded tokens in tests | All API calls mocked with `unittest.mock` |
-| SQL safety (dogfooding) | No SQL in this codebase; policy documented in `.cursorrules` |
-
----
-
-## 9. Usage Examples
-
-### Python API
-
-```python
-from src.agent import chat, review_file, reset_conversation
-
-# Single review
-response = chat("Review this: def add(a, b): return a - b")
-print(response)
-
-# Review a file
-response = review_file("src/agent.py")
-
-# Multi-turn follow-up
-chat("Review this function: ...")
-follow_up = chat("Can you show me the fixed version?")
-
-# Start fresh
-reset_conversation()
-```
-
-### CLI
-
-```
-$ python src/agent.py
-╔══════════════════════════════════════════╗
-║       CodeReview Agent  v1.0.0           ║
-║  Paste code · Drop a file path · Chat    ║
-╚══════════════════════════════════════════╝
-
-You: file examples/bad_code.py
-Agent: { "summary": "7 issues — 2 critical", ... }
-
-You: Tell me more about finding FINDING-003
-Agent: FINDING-003 is the mutable default argument on line 34...
-
-You: reset
-Agent: Conversation reset. Ready for a fresh review.
-```
-
----
-
-## 10. Design Decisions
-
-**Why a specialised system prompt instead of a general one?**
-General prompts produce general output. A system prompt that defines a strict JSON schema, a severity taxonomy, and five specific review categories consistently produces structured, machine-parseable output — even across long multi-turn sessions.
-
-**Why multi-turn conversation history?**
-A single-shot reviewer can't answer "why did you flag line 42?" or "show me the fixed version." Maintaining history unlocks iterative review: ask for a summary, drill into a finding, request a refactored snippet — all in the same session.
-
-**Why a custom performance metric?**
-Generic LLM benchmarks (MMLU, HumanEval) don't measure code-review quality. The 6-dimension metric in `benchmark.py` is purpose-built: it rewards catching real bugs, penalises scope drift, and degrades gracefully on latency. It's reproducible, transparent, and tunable.
-
-**Why no frameworks?**
-Adding LangChain, LlamaIndex, etc. would introduce abstraction layers that obscure how the Anthropic API works. The codebase is deliberately lean so the agent logic is easy to read, extend, and debug.
-
----
-
-## 11. Contributing
-
-```bash
-# Fork, then:
-git checkout -b feat/your-feature
-# Make changes
-pytest -q                          # must pass
-git commit -m "feat(scope): desc"
-git push origin feat/your-feature
-# Open a PR
-```
-
-Please update `WEIGHTS` in `benchmark.py` if you add a new scoring dimension, ensuring they still sum to `1.0`.
-
----
-
-*Built with the Anthropic Messages API. Cursor-ready. No secrets committed.*
+No explicit license file is present in the repository. Add one if you plan to distribute the project.

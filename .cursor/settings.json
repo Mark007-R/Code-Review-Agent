@@ -1,0 +1,21 @@
+{
+  "rules": [
+    {
+      "pattern": "src/**/*.py",
+      "description": "Agent source files — follow .cursorrules strictly"
+    },
+    {
+      "pattern": "tests/**/*.py",
+      "description": "Test files — mock all external API calls; use pytest conventions"
+    }
+  ],
+  "ai": {
+    "defaultModel": "claude-opus-4-5",
+    "contextFiles": [
+      "src/agent.py",
+      "src/benchmark.py",
+      ".cursorrules",
+      "README.md"
+    ]
+  }
+}

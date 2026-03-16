@@ -1,0 +1,51 @@
+# .cursorrules — CodeReview Agent
+# Cursor will load these rules into every AI interaction inside this project.
+
+## Project identity
+This is **CodeReview Agent**, a specialised AI agent for automated code review.
+Primary language: Python 3.11+.
+Entry point: `src/agent.py`
+Test suite: `tests/`
+
+## Architecture
+- `src/agent.py`      — Multi-turn conversation loop using Anthropic Messages API
+- `src/benchmark.py`  — Performance evaluation (0–10 000 scoring system)
+- `tests/`            — Pytest test suite
+- `examples/`         — Sample code files to review (bugs intentionally planted)
+
+## Coding conventions
+- Type-annotate every function signature.
+- Use `dataclasses` or `pydantic` for structured data; avoid raw dicts where a type helps.
+- Keep functions under 40 lines; extract helpers generously.
+- Prefer f-strings over `.format()` or `%`.
+- Never hard-code API keys or tokens. Always read from `os.environ`.
+- Raise descriptive exceptions; never `except Exception: pass`.
+- Write docstrings for every public function (Google style).
+
+## Security rules (enforced by agent)
+- All secrets → environment variables (`.env` + `python-dotenv`, never committed).
+- SQL → parameterised queries only; no string interpolation.
+- File paths → `pathlib.Path` with strict validation before `open()`.
+
+## Testing
+- Use `pytest` + `pytest-mock`.
+- Every new feature needs a corresponding test.
+- Run `pytest -q` before committing.
+- Mock all Anthropic API calls in tests (never call the real API from tests).
+
+## Anthropic SDK usage
+- Use `anthropic.Anthropic()` (sync) or `anthropic.AsyncAnthropic()` (async).
+- Model: `claude-opus-4-5` for production; `claude-haiku-3-5` for fast unit tests.
+- Always set `max_tokens`; never omit it.
+- Stream long reviews with `client.messages.stream()` when response > 2 000 tokens expected.
+
+## Cursor-specific hints
+- When generating new agent capabilities, follow the pattern in `src/agent.py`.
+- When adding a new benchmark dimension, update `WEIGHTS` in `src/benchmark.py` so they sum to 1.0.
+- Prefer modifying existing files over creating new ones unless the new responsibility is clearly distinct.
+- Ask before adding new dependencies; update `requirements.txt` if approved.
+
+## Commit message format
+`<type>(<scope>): <short description>`
+Types: feat, fix, perf, refactor, test, docs, chore
+Example: `feat(agent): add streaming support for long reviews`

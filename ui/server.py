@@ -1,5 +1,5 @@
 """
-FastAPI backend — bridges the browser UI to the CodeReview Agent.
+FastAPI backend — bridges the browser UI to QuestAgent.
 Run: uvicorn ui.server:app --reload --port 8000
 """
 
@@ -18,7 +18,7 @@ load_dotenv()
 
 from src.agent import chat, review_file, reset_conversation, conversation_history
 
-app = FastAPI(title="CodeReview Agent UI")
+app = FastAPI(title="QuestAgent UI")
 
 app.add_middleware(
     CORSMiddleware,

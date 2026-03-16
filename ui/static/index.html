@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeReview Agent</title>
+<title>QuestAgent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -739,7 +739,7 @@
           <path d="M13 13l1 1 2-2" stroke="#00e5a0" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <span class="logo-name">CodeReview</span>
+      <span class="logo-name">QuestAgent</span>
     </div>
     <div class="logo-sub">Agent v1.0.0</div>
   </div>
@@ -792,7 +792,7 @@
 <!-- ── MAIN ── -->
 <main class="main">
   <div class="topbar">
-    <span class="topbar-title">Code Review Session</span>
+    <span class="topbar-title">QuestAgent Session</span>
     <div class="topbar-model">
       <div class="status-dot" style="animation:none;background:var(--accent)"></div>
       <span>llama-3.3-70b-versatile</span>
@@ -809,7 +809,7 @@
           <path d="M23 21l1.5 1.5L27 19.5" stroke="#00e5a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <div class="welcome-title">CodeReview Agent</div>
+      <div class="welcome-title">QuestAgent</div>
       <div class="welcome-sub">
         Paste code for an instant review — bugs, security issues,<br>
         performance problems, and more. I return structured findings<br>
@@ -880,7 +880,7 @@ function addMessage(role, content) {
   const isAgent = role === 'agent';
   const initial = isAgent ? 'CR' : 'U';
   const avatarClass = isAgent ? 'agent' : 'user';
-  const name = isAgent ? 'CodeReview Agent' : 'You';
+  const name = isAgent ? 'QuestAgent' : 'You';
 
   let bodyHtml = '';
 
@@ -926,7 +926,7 @@ function addThinking() {
     <div class="avatar agent">CR</div>
     <div class="bubble">
       <div class="bubble-header">
-        <span class="bubble-name">CodeReview Agent</span>
+        <span class="bubble-name">QuestAgent</span>
         <span class="bubble-time">${now()}</span>
       </div>
       <div class="bubble-content">

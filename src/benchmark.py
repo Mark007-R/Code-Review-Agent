@@ -1,5 +1,5 @@
 """
-Performance evaluation module for CodeReview Agent.
+Performance evaluation module for QuestAgent.
 
 Scoring scale: 0 – 10,000 composite points.
 Each dimension is scored 0–100, then weighted and scaled.

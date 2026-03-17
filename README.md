@@ -114,6 +114,10 @@ Main API routes:
 - `GET /history` -> returns in-memory chat history
 - `GET /health` -> health/model/provider info
 
+## Screenshots
+![Home screen](images/Home1.png)
+![Home screen 2](images/Home2.png)
+
 ## Run benchmark
 
 ```powershell

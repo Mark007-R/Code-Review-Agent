@@ -10,13 +10,11 @@ import re
 from typing import Any
 from groq import Groq
 from dotenv import load_dotenv
-load_dotenv()  # loads .env before reading os.environ
+load_dotenv()
 
-# ── Client ────────────────────────────────────────────────────────────────────
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
-MODEL = "llama-3.3-70b-versatile"   # fast + free on Groq
+MODEL = "llama-3.3-70b-versatile"
 
-# ── System prompt ─────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """You are QuestAgent — an expert AI software quality reviewer with deep knowledge of
 software engineering best practices, security vulnerabilities, and performance optimization.
 
@@ -50,10 +48,7 @@ Output format (always JSON-parseable when asked):
 Be direct, specific, and constructive. Never be vague. Cite line numbers when possible.
 When no code is provided, ask the user to paste code or describe what they want reviewed."""
 
-# ── Conversation memory ───────────────────────────────────────────────────────
 conversation_history: list[dict[str, Any]] = []
-
-# ── Core agent loop ───────────────────────────────────────────────────────────
 
 def chat(user_message: str) -> str:
     """Send a message and get a response, maintaining conversation history."""
@@ -99,8 +94,6 @@ def reset_conversation() -> None:
     conversation_history.clear()
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def _detect_language(path: str) -> str:
     ext_map = {
         ".py": "python", ".js": "javascript", ".ts": "typescript",
@@ -113,8 +106,6 @@ def _detect_language(path: str) -> str:
     ext = "." + path.rsplit(".", 1)[-1].lower() if "." in path else ""
     return ext_map.get(ext, "text")
 
-
-# ── CLI entry point ───────────────────────────────────────────────────────────
 
 def main() -> None:
     print("╔══════════════════════════════════════════╗")

@@ -7,8 +7,6 @@ import json
 import pytest
 from unittest.mock import MagicMock, patch
 
-# ── Fixtures ──────────────────────────────────────────────────────────────────
-
 MOCK_REVIEW_JSON = {
     "summary": "Critical SQL injection vulnerability found.",
     "score": 30,
@@ -40,8 +38,6 @@ def _make_mock_response(text: str) -> MagicMock:
     msg.content = [MagicMock(text=text)]
     return msg
 
-
-# ── Agent tests ───────────────────────────────────────────────────────────────
 
 @patch("src.agent.client")
 def test_chat_returns_string(mock_client):
@@ -106,8 +102,6 @@ def test_score_from_no_score():
     from src.agent import score_from_response
     assert score_from_response("No score here.") is None
 
-
-# ── Benchmark tests ───────────────────────────────────────────────────────────
 
 def test_score_accuracy_full_hit():
     from src.benchmark import score_accuracy

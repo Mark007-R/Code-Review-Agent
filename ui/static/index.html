@@ -48,7 +48,6 @@
     overflow: hidden;
   }
 
-  /* ── SIDEBAR ── */
   .sidebar {
     background: var(--surface);
     border-right: 1px solid var(--border);
@@ -245,7 +244,6 @@
     background: var(--red-dim);
   }
 
-  /* ── MAIN ── */
   .main {
     display: flex;
     flex-direction: column;
@@ -292,7 +290,6 @@
     font-weight: 500;
   }
 
-  /* ── CHAT ── */
   .chat-area {
     flex: 1;
     overflow-y: auto;
@@ -370,7 +367,6 @@
     background: var(--accent-dim);
   }
 
-  /* Message bubbles */
   .message {
     display: flex;
     gap: 14px;
@@ -456,7 +452,6 @@
   .message.user .bubble { text-align: right; }
   .message.user .bubble-content { text-align: left; }
 
-  /* Findings card */
   .findings-card {
     background: var(--surface2);
     border: 1px solid var(--border2);
@@ -608,7 +603,6 @@
     width: 14px;
   }
 
-  /* Thinking animation */
   .thinking {
     display: flex;
     align-items: center;
@@ -639,7 +633,6 @@
     40% { opacity: 1; transform: scale(1); }
   }
 
-  /* Plain text response */
   .plain-response {
     font-size: 13px;
     color: var(--text2);
@@ -647,7 +640,6 @@
     white-space: pre-wrap;
   }
 
-  /* ── INPUT ── */
   .input-area {
     padding: 16px 24px 20px;
     border-top: 1px solid var(--border);
@@ -728,7 +720,6 @@
 </head>
 <body>
 
-<!-- ── SIDEBAR ── -->
 <aside class="sidebar">
   <div class="logo">
     <div class="logo-mark">
@@ -780,7 +771,7 @@
   <div class="sidebar-bottom">
     <div>
       <span class="status-dot"></span>
-      <span class="status-text" id="status-text">Connected · Groq LLaMA 3.3</span>
+      <span class="status-text" id="status-text">Connected | Groq LLaMA 3.3</span>
     </div>
     <button class="reset-btn" onclick="resetChat()">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 8a6 6 0 0110.7-3.7L14 6V2h-4l1.4 1.4A4 4 0 104 9.5"/></svg>
@@ -789,7 +780,6 @@
   </div>
 </aside>
 
-<!-- ── MAIN ── -->
 <main class="main">
   <div class="topbar">
     <span class="topbar-title">QuestAgent Session</span>
@@ -811,7 +801,7 @@
       </div>
       <div class="welcome-title">QuestAgent</div>
       <div class="welcome-sub">
-        Paste code for an instant review — bugs, security issues,<br>
+        Paste code for an instant review - bugs, security issues,<br>
         performance problems, and more. I return structured findings<br>
         with severity ratings and line-specific fixes.
       </div>
@@ -830,7 +820,7 @@
         <svg viewBox="0 0 16 16" fill="#000"><path d="M2 8L14 2l-4 6 4 6L2 8zm0 0l6-2"/></svg>
       </button>
     </div>
-    <div class="input-hint"><kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for newline</div>
+    <div class="input-hint"><kbd>Enter</kbd> to send | <kbd>Shift+Enter</kbd> for newline</div>
   </div>
 </main>
 
@@ -908,7 +898,6 @@ function addMessage(role, content) {
   area.appendChild(msg);
   area.scrollTop = area.scrollHeight;
 
-  // Attach expand toggles
   msg.querySelectorAll('.finding-item').forEach(item => {
     item.addEventListener('click', () => item.classList.toggle('expanded'));
   });
@@ -946,13 +935,11 @@ function removeThinking() {
 }
 
 function tryParseFindings(text) {
-  // Strip markdown fences if present
   const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
   try {
     const d = JSON.parse(clean);
     if (d.findings !== undefined && d.summary !== undefined) return d;
   } catch {}
-  // Try to extract JSON block from mixed text
   const m = text.match(/\{[\s\S]*"findings"[\s\S]*\}/);
   if (m) {
     try {
@@ -964,7 +951,7 @@ function tryParseFindings(text) {
 }
 
 function renderFindings(d) {
-  const score = d.score ?? '—';
+  const score = d.score ?? '-';
   const scoreColor = score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--amber)' : 'var(--red)';
   const sb = d.severity_breakdown || {};
   const findings = d.findings || [];
@@ -1002,7 +989,7 @@ function renderFindings(d) {
   const positiveItems = positives.length ? `
     <div style="padding:10px 16px;border-top:1px solid var(--border)">
       <div class="priority-label" style="color:var(--accent)">Positives</div>
-      ${positives.map(p => `<div class="priority-item"><span class="priority-num" style="color:var(--accent)">✓</span>${escHtml(p)}</div>`).join('')}
+      ${positives.map(p => `<div class="priority-item"><span class="priority-num" style="color:var(--accent)">+</span>${escHtml(p)}</div>`).join('')}
     </div>` : '';
 
   return `
@@ -1050,7 +1037,7 @@ async function sendMessage() {
     addMessage('agent', data.response || data.error || 'No response.');
   } catch (e) {
     removeThinking();
-    addMessage('agent', `⚠ Could not reach the server. Make sure it's running:\n\nuvicorn ui.server:app --reload --port 8000`);
+    addMessage('agent', `Could not reach the server. Make sure it's running:\n\nuvicorn ui.server:app --reload --port 8000`);
   }
   setThinking(false);
 }
@@ -1074,7 +1061,7 @@ async function reviewFile() {
     addMessage('agent', data.response || data.error || 'No response.');
   } catch (e) {
     removeThinking();
-    addMessage('agent', `⚠ Server not reachable. Run: uvicorn ui.server:app --reload --port 8000`);
+    addMessage('agent', `Server not reachable. Run: uvicorn ui.server:app --reload --port 8000`);
   }
   setThinking(false);
 }
@@ -1102,16 +1089,14 @@ function setThinking(v) {
   document.getElementById('send-btn').disabled = v;
   if (v) addThinking();
   document.getElementById('status-text').textContent = v
-    ? 'Analysing...' : 'Connected · Groq LLaMA 3.3';
+    ? 'Analysing...' : 'Connected | Groq LLaMA 3.3';
 }
 
-// Auto-resize textarea
 document.getElementById('chat-input').addEventListener('input', function () {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 140) + 'px';
 });
 
-// Enter to send
 document.getElementById('chat-input').addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();

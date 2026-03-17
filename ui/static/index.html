@@ -771,7 +771,7 @@
   <div class="sidebar-bottom">
     <div>
       <span class="status-dot"></span>
-      <span class="status-text" id="status-text">Connected | Groq LLaMA 3.3</span>
+      <span class="status-text" id="status-text">Connected · Groq LLaMA 3.3</span>
     </div>
     <button class="reset-btn" onclick="resetChat()">
       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 8a6 6 0 0110.7-3.7L14 6V2h-4l1.4 1.4A4 4 0 104 9.5"/></svg>
@@ -1089,7 +1089,7 @@ function setThinking(v) {
   document.getElementById('send-btn').disabled = v;
   if (v) addThinking();
   document.getElementById('status-text').textContent = v
-    ? 'Analysing...' : 'Connected | Groq LLaMA 3.3';
+    ? 'Analysing...' : 'Connected · Groq LLaMA 3.3';
 }
 
 document.getElementById('chat-input').addEventListener('input', function () {

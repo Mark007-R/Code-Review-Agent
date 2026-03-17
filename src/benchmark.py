@@ -12,28 +12,22 @@ import statistics
 from dataclasses import dataclass, field
 from typing import Callable
 
-
-# ── Scoring constants ─────────────────────────────────────────────────────────
-
 WEIGHTS = {
-    "accuracy":    0.35,   # Did it catch the planted bugs / vulns?
-    "relevance":   0.20,   # Are findings actually about the code submitted?
-    "specificity": 0.20,   # Does it cite line numbers & concrete fixes?
-    "latency":     0.10,   # Inverse of response time (penalises slowness)
-    "format":      0.10,   # Is the JSON schema valid and complete?
-    "false_pos":   0.05,   # Penalty for hallucinated findings
+    "accuracy":    0.35,
+    "relevance":   0.20,
+    "specificity": 0.20,
+    "latency":     0.10,
+    "format":      0.10,
+    "false_pos":   0.05,
 }
 
 MAX_SCORE = 10_000
-
-
-# ── Data classes ──────────────────────────────────────────────────────────────
 
 @dataclass
 class TestCase:
     name: str
     code_snippet: str
-    planted_issues: list[str]            # Known bugs/vulns we expect to be caught
+    planted_issues: list[str]
     language: str = "python"
 
 
@@ -44,9 +38,6 @@ class EvalResult:
     latency_seconds: float
     dimension_scores: dict[str, float] = field(default_factory=dict)
     composite_score: float = 0.0
-
-
-# ── Planted test suite ────────────────────────────────────────────────────────
 
 TEST_SUITE: list[TestCase] = [
     TestCase(
@@ -78,7 +69,7 @@ def call_service(payload):
         code_snippet="""
 def sum_pairs(nums: list[int]) -> int:
     total = 0
-    for i in range(len(nums)):      # should be range(len(nums) - 1)
+    for i in range(len(nums)):
         total += nums[i] + nums[i + 1]
     return total
 """,
@@ -92,7 +83,7 @@ def get_authors_with_books():
     authors = Author.objects.all()
     result = []
     for author in authors:
-        books = Book.objects.filter(author=author)   # N+1
+        books = Book.objects.filter(author=author)
         result.append({"author": author.name, "books": list(books)})
     return result
 """,
@@ -103,17 +94,14 @@ def get_authors_with_books():
         planted_issues=["race_condition", "non_atomic_check_then_act"],
         code_snippet="""
 def withdraw(account_id: int, amount: float):
-    balance = get_balance(account_id)      # read
-    if balance >= amount:                  # check
-        set_balance(account_id, balance - amount)   # act — race window here
+    balance = get_balance(account_id)
+    if balance >= amount:
+        set_balance(account_id, balance - amount)
         return True
     return False
 """,
     ),
 ]
-
-
-# ── Scoring functions ─────────────────────────────────────────────────────────
 
 def score_accuracy(response: str, planted: list[str]) -> float:
     """Fraction of planted issues mentioned (keyword matching as proxy)."""
@@ -139,7 +127,6 @@ def score_accuracy(response: str, planted: list[str]) -> float:
 
 def score_relevance(response: str, code: str) -> float:
     """Penalty if response discusses unrelated topics at length."""
-    # Simple proxy: response must be < 5× the code length and focused
     if len(response) > len(code) * 10:
         return 0.5
     return 1.0
@@ -169,7 +156,6 @@ def score_format(response: str) -> float:
         present = required_keys.intersection(data.keys())
         return len(present) / len(required_keys)
     except (json.JSONDecodeError, TypeError):
-        # Partial credit if keys appear in text
         text_hits = sum(1 for k in required_keys if k in response.lower())
         return (text_hits / len(required_keys)) * 0.5
 
@@ -180,13 +166,12 @@ def score_false_positives(response: str, code: str) -> float:
         data = json.loads(response)
         findings = data.get("findings", [])
     except (json.JSONDecodeError, TypeError):
-        return 1.0   # can't parse, skip penalty
+        return 1.0
 
     code_tokens = set(re.findall(r'\w+', code))
     penalty = 0
     for f in findings:
         desc = f.get("description", "") + f.get("title", "")
-        # If the finding mentions symbols we can verify aren't in the code, penalise
         mentioned = set(re.findall(r'`(\w+)`', desc))
         hallucinated = mentioned - code_tokens
         if len(hallucinated) > 2:
@@ -194,16 +179,10 @@ def score_false_positives(response: str, code: str) -> float:
 
     return max(0.0, 1.0 - penalty * 0.1)
 
-
-# ── Composite scoring ─────────────────────────────────────────────────────────
-
 def compute_composite(dim: dict[str, float]) -> float:
     """Weighted average of dimensions, scaled to MAX_SCORE."""
     raw = sum(dim[k] * WEIGHTS[k] for k in WEIGHTS)
     return round(raw * MAX_SCORE, 2)
-
-
-# ── Benchmark runner ──────────────────────────────────────────────────────────
 
 def run_benchmark(agent_fn: Callable[[str], str]) -> dict:
     """
@@ -241,7 +220,6 @@ def run_benchmark(agent_fn: Callable[[str], str]) -> dict:
             composite_score=composite,
         ))
 
-    # Aggregate
     all_scores = [r.composite_score for r in results]
     summary = {
         "total_tests": len(results),
@@ -264,7 +242,6 @@ def run_benchmark(agent_fn: Callable[[str], str]) -> dict:
 
 
 if __name__ == "__main__":
-    # Quick self-test with a mock agent
     def mock_agent(msg: str) -> str:
         return json.dumps({
             "summary": "Found issues",

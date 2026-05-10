@@ -12,7 +12,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -56,11 +56,11 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(min_length=1, max_length=50_000)
 
 
 class FileRequest(BaseModel):
-    path: str
+    path: str = Field(min_length=1, max_length=4_096)
 
 
 @app.get("/")

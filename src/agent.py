@@ -12,7 +12,14 @@ from groq import Groq
 from dotenv import load_dotenv
 load_dotenv()
 
-client = Groq(api_key=os.environ["GROQ_API_KEY"])
+_API_KEY = os.environ.get("GROQ_API_KEY")
+if not _API_KEY:
+    raise RuntimeError(
+        "GROQ_API_KEY is not set. Copy .env.example to .env and add your key, "
+        "or export GROQ_API_KEY in the current shell."
+    )
+
+client = Groq(api_key=_API_KEY)
 MODEL = "llama-3.3-70b-versatile"
 
 SYSTEM_PROMPT = """You are QuestAgent — an expert AI software quality reviewer with deep knowledge of
@@ -50,17 +57,34 @@ When no code is provided, ask the user to paste code or describe what they want 
 
 conversation_history: list[dict[str, Any]] = []
 
+
+class AgentError(RuntimeError):
+    """Raised when the underlying LLM call fails or returns an unusable response."""
+
+
 def chat(user_message: str) -> str:
-    """Send a message and get a response, maintaining conversation history."""
+    """Send a message and get a response, maintaining conversation history.
+
+    Raises:
+        AgentError: when the Groq API call fails or returns no content.
+    """
     conversation_history.append({"role": "user", "content": user_message})
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        max_tokens=8096,
-        messages=[{"role": "system", "content": SYSTEM_PROMPT}] + conversation_history,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            max_tokens=8096,
+            messages=[{"role": "system", "content": SYSTEM_PROMPT}] + conversation_history,
+        )
+    except Exception as exc:
+        conversation_history.pop()
+        raise AgentError(f"Groq API call failed: {exc}") from exc
 
     assistant_message = response.choices[0].message.content
+    if assistant_message is None:
+        conversation_history.pop()
+        raise AgentError("Groq API returned an empty response.")
+
     conversation_history.append({"role": "assistant", "content": assistant_message})
     return assistant_message
 
@@ -130,15 +154,18 @@ def main() -> None:
             reset_conversation()
             print("Agent: Conversation reset. Ready for a fresh review.\n")
             continue
-        if user_input.lower().startswith("file "):
-            path = user_input[5:].strip()
-            try:
+        try:
+            if user_input.lower().startswith("file "):
+                path = user_input[5:].strip()
                 response = review_file(path)
-            except FileNotFoundError:
-                print(f"Agent: File not found: {path}\n")
-                continue
-        else:
-            response = chat(user_input)
+            else:
+                response = chat(user_input)
+        except FileNotFoundError as exc:
+            print(f"Agent: File not found: {exc.filename or user_input[5:].strip()}\n")
+            continue
+        except AgentError as exc:
+            print(f"Agent: {exc}\n")
+            continue
 
         print(f"\nAgent: {response}\n")
 

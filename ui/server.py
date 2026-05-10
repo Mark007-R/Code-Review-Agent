@@ -7,7 +7,7 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -16,14 +16,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.agent import chat, review_file, reset_conversation, conversation_history
+from src.agent import chat, review_file, reset_conversation, conversation_history, AgentError
 
 app = FastAPI(title="QuestAgent UI")
 
+# CORS_ALLOW_ORIGINS env var lets deployments override; default is local dev only.
+_default_origins = "http://localhost:8000,http://127.0.0.1:8000"
+_allowed_origins = [o.strip() for o in os.environ.get("CORS_ALLOW_ORIGINS", _default_origins).split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=_allowed_origins,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -47,7 +51,10 @@ def root():
 
 @app.post("/chat")
 def handle_chat(req: ChatRequest):
-    response = chat(req.message)
+    try:
+        response = chat(req.message)
+    except AgentError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
     return {"response": response, "history_length": len(conversation_history)}
 
 
@@ -55,9 +62,11 @@ def handle_chat(req: ChatRequest):
 def handle_file(req: FileRequest):
     try:
         response = review_file(req.path)
-        return {"response": response, "history_length": len(conversation_history)}
     except FileNotFoundError:
-        return {"error": f"File not found: {req.path}"}
+        raise HTTPException(status_code=404, detail=f"File not found: {req.path}")
+    except AgentError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    return {"response": response, "history_length": len(conversation_history)}
 
 
 @app.post("/reset")

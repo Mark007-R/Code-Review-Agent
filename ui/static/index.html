@@ -825,7 +825,7 @@
 </main>
 
 <script>
-const API = 'http://localhost:8000';
+const API = '';
 let mode = 'chat';
 let isThinking = false;
 
@@ -1034,7 +1034,7 @@ async function sendMessage() {
     });
     const data = await res.json();
     removeThinking();
-    addMessage('agent', data.response || data.error || 'No response.');
+    addMessage('agent', data.response || data.detail || data.error || 'No response.');
   } catch (e) {
     removeThinking();
     addMessage('agent', `Could not reach the server. Make sure it's running:\n\nuvicorn ui.server:app --reload --port 8000`);
@@ -1058,7 +1058,7 @@ async function reviewFile() {
     });
     const data = await res.json();
     removeThinking();
-    addMessage('agent', data.response || data.error || 'No response.');
+    addMessage('agent', data.response || data.detail || data.error || 'No response.');
   } catch (e) {
     removeThinking();
     addMessage('agent', `Server not reachable. Run: uvicorn ui.server:app --reload --port 8000`);

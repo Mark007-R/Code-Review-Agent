@@ -7,6 +7,7 @@ Powered by Groq (free tier at console.groq.com).
 import os
 import json
 import re
+from pathlib import Path
 from typing import Any
 from groq import Groq
 from dotenv import load_dotenv
@@ -91,11 +92,11 @@ def chat(user_message: str) -> str:
 
 def review_file(file_path: str) -> str:
     """Load a file from disk and submit it for review."""
-    with open(file_path, "r", encoding="utf-8") as fh:
-        code = fh.read()
-    language = _detect_language(file_path)
+    path = Path(file_path)
+    code = path.read_text(encoding="utf-8")
+    language = _detect_language(path)
     prompt = (
-        f"Please review the following {language} file (`{file_path}`).\n"
+        f"Please review the following {language} file (`{path}`).\n"
         f"Return your response as valid JSON matching the schema in your system prompt.\n\n"
         f"```{language}\n{code}\n```"
     )
@@ -118,7 +119,7 @@ def reset_conversation() -> None:
     conversation_history.clear()
 
 
-def _detect_language(path: str) -> str:
+def _detect_language(path: Path | str) -> str:
     ext_map = {
         ".py": "python", ".js": "javascript", ".ts": "typescript",
         ".jsx": "jsx", ".tsx": "tsx", ".go": "go", ".rs": "rust",
@@ -127,8 +128,7 @@ def _detect_language(path: str) -> str:
         ".sh": "bash", ".sql": "sql", ".yaml": "yaml", ".yml": "yaml",
         ".json": "json", ".tf": "hcl",
     }
-    ext = "." + path.rsplit(".", 1)[-1].lower() if "." in path else ""
-    return ext_map.get(ext, "text")
+    return ext_map.get(Path(path).suffix.lower(), "text")
 
 
 def main() -> None:
@@ -154,14 +154,14 @@ def main() -> None:
             reset_conversation()
             print("Agent: Conversation reset. Ready for a fresh review.\n")
             continue
+        file_cmd_path: str | None = None
+        if user_input.lower().startswith("file "):
+            file_cmd_path = user_input.split(maxsplit=1)[1].strip()
+
         try:
-            if user_input.lower().startswith("file "):
-                path = user_input[5:].strip()
-                response = review_file(path)
-            else:
-                response = chat(user_input)
+            response = review_file(file_cmd_path) if file_cmd_path else chat(user_input)
         except FileNotFoundError as exc:
-            print(f"Agent: File not found: {exc.filename or user_input[5:].strip()}\n")
+            print(f"Agent: File not found: {exc.filename or file_cmd_path}\n")
             continue
         except AgentError as exc:
             print(f"Agent: {exc}\n")

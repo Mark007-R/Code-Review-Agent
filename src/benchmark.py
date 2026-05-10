@@ -241,8 +241,27 @@ def run_benchmark(agent_fn: Callable[[str], str]) -> dict:
     return summary
 
 
+def print_summary(report: dict) -> None:
+    """Render a benchmark report as a human-readable summary table."""
+    print(f"\nQuestAgent Benchmark Summary")
+    print("=" * 72)
+    print(f"  Tests run:     {report['total_tests']}")
+    print(f"  Overall score: {report['overall_score']:>9.2f} / {MAX_SCORE}")
+    print(f"  Mean / median: {report['mean_score']:.2f} / {report['median_score']:.2f}")
+    print(f"  Min  / max:    {report['min_score']:.2f} / {report['max_score']:.2f}")
+    print()
+    header = f"  {'Test':<22} {'Composite':>10} {'Latency(s)':>11}   Dimensions"
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+    for row in report["per_test"]:
+        dims = " ".join(f"{k}={v:.0f}" for k, v in row["dimensions"].items())
+        print(f"  {row['name']:<22} {row['composite']:>10.2f} {row['latency_s']:>11.2f}   {dims}")
+    print("=" * 72)
+
+
 if __name__ == "__main__":
-    def mock_agent(msg: str) -> str:
+    def _demo_agent(_msg: str) -> str:
+        """Stub agent that returns the same canned response regardless of input."""
         return json.dumps({
             "summary": "Found issues",
             "score": 45,
@@ -262,5 +281,7 @@ if __name__ == "__main__":
             "refactor_priority": ["Fix SQL injection first"],
         })
 
-    report = run_benchmark(mock_agent)
+    report = run_benchmark(_demo_agent)
+    print_summary(report)
+    print("\nFull JSON:")
     print(json.dumps(report, indent=2))

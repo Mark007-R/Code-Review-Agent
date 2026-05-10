@@ -192,4 +192,4 @@ pytest -q
 
 ## License
 
-No explicit license file is present in the repository. Add one if you plan to distribute the project.
+[MIT](LICENSE) © 2026 Mark Rodrigues

@@ -6,6 +6,8 @@ All Groq API calls are mocked — no real API keys needed.
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 MOCK_REVIEW_JSON = {
     "summary": "Critical SQL injection vulnerability found.",
     "score": 30,
@@ -86,6 +88,26 @@ def test_reset_conversation():
         assert len(conversation_history) > 0
         reset_conversation()
         assert len(conversation_history) == 0
+
+
+@patch("src.agent.client")
+def test_chat_wraps_api_errors(mock_client):
+    mock_client.chat.completions.create.side_effect = RuntimeError("boom")
+    from src.agent import chat, reset_conversation, conversation_history, AgentError
+    reset_conversation()
+    with pytest.raises(AgentError, match="Groq API call failed"):
+        chat("hello")
+    assert conversation_history == []
+
+
+@patch("src.agent.client")
+def test_chat_rejects_empty_response(mock_client):
+    mock_client.chat.completions.create.return_value = _make_mock_response(None)
+    from src.agent import chat, reset_conversation, conversation_history, AgentError
+    reset_conversation()
+    with pytest.raises(AgentError, match="empty response"):
+        chat("hello")
+    assert conversation_history == []
 
 
 def test_score_from_valid_json():

@@ -1,11 +1,12 @@
 """
 Tests for QuestAgent.
-All Anthropic API calls are mocked — no real API keys needed.
+All Groq API calls are mocked — no real API keys needed.
 """
 
 import json
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 MOCK_REVIEW_JSON = {
     "summary": "Critical SQL injection vulnerability found.",
@@ -34,14 +35,17 @@ def get_user(username: str):
 
 
 def _make_mock_response(text: str) -> MagicMock:
-    msg = MagicMock()
-    msg.content = [MagicMock(text=text)]
-    return msg
+    """Build a Groq-style ChatCompletion stub: response.choices[0].message.content."""
+    response = MagicMock()
+    choice = MagicMock()
+    choice.message.content = text
+    response.choices = [choice]
+    return response
 
 
 @patch("src.agent.client")
 def test_chat_returns_string(mock_client):
-    mock_client.messages.create.return_value = _make_mock_response("Hello!")
+    mock_client.chat.completions.create.return_value = _make_mock_response("Hello!")
     from src.agent import chat, reset_conversation
     reset_conversation()
     result = chat("Hello")
@@ -51,7 +55,7 @@ def test_chat_returns_string(mock_client):
 
 @patch("src.agent.client")
 def test_chat_appends_history(mock_client):
-    mock_client.messages.create.return_value = _make_mock_response("Got it.")
+    mock_client.chat.completions.create.return_value = _make_mock_response("Got it.")
     from src.agent import chat, reset_conversation, conversation_history
     reset_conversation()
     chat("Review my code")
@@ -62,7 +66,7 @@ def test_chat_appends_history(mock_client):
 
 @patch("src.agent.client")
 def test_review_file_reads_and_submits(mock_client, tmp_path):
-    mock_client.messages.create.return_value = _make_mock_response(
+    mock_client.chat.completions.create.return_value = _make_mock_response(
         json.dumps(MOCK_REVIEW_JSON)
     )
     from src.agent import review_file, reset_conversation
@@ -78,12 +82,32 @@ def test_review_file_reads_and_submits(mock_client, tmp_path):
 def test_reset_conversation():
     from src.agent import chat, reset_conversation, conversation_history
     with patch("src.agent.client") as mock_client:
-        mock_client.messages.create.return_value = _make_mock_response("Hi")
+        mock_client.chat.completions.create.return_value = _make_mock_response("Hi")
         reset_conversation()
         chat("test")
         assert len(conversation_history) > 0
         reset_conversation()
         assert len(conversation_history) == 0
+
+
+@patch("src.agent.client")
+def test_chat_wraps_api_errors(mock_client):
+    mock_client.chat.completions.create.side_effect = RuntimeError("boom")
+    from src.agent import chat, reset_conversation, conversation_history, AgentError
+    reset_conversation()
+    with pytest.raises(AgentError, match="Groq API call failed"):
+        chat("hello")
+    assert conversation_history == []
+
+
+@patch("src.agent.client")
+def test_chat_rejects_empty_response(mock_client):
+    mock_client.chat.completions.create.return_value = _make_mock_response(None)
+    from src.agent import chat, reset_conversation, conversation_history, AgentError
+    reset_conversation()
+    with pytest.raises(AgentError, match="empty response"):
+        chat("hello")
+    assert conversation_history == []
 
 
 def test_score_from_valid_json():

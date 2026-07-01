@@ -1,5 +1,7 @@
 # QuestAgent - CodeReview Agent
 
+> 🔗 **Live demo:** https://iambatman07-questagent.hf.space _(set `GROQ_API_KEY` in Space secrets to activate the agent)_ · [HF Space](https://huggingface.co/spaces/IamBatman07/QuestAgent)
+
 QuestAgent is a specialized AI code review assistant built in Python.
 It reviews pasted code or full files, returns structured findings, and can be used from both:
 
@@ -113,10 +115,6 @@ Main API routes:
 - `POST /reset` -> clears conversation history
 - `GET /history` -> returns in-memory chat history
 - `GET /health` -> health/model/provider info
-
-## Screenshots
-![Home screen](images/Home1.png)
-![Home screen 2](images/Home2.png)
 
 ## Run benchmark
 

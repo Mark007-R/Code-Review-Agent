@@ -1,8 +1,8 @@
-# QuestAgent - CodeReview Agent
+# Code-Review-Agent
 
 > 🔗 **Live demo:** https://iambatman07-questagent.hf.space _(set `GROQ_API_KEY` in Space secrets to activate the agent)_ · [HF Space](https://huggingface.co/spaces/IamBatman07/QuestAgent)
 
-QuestAgent is a specialized AI code review assistant built in Python.
+Code-Review-Agent is a specialized AI code review assistant built in Python.
 It reviews pasted code or full files, returns structured findings, and can be used from both:
 
 - A CLI chat loop
@@ -29,7 +29,7 @@ The project also includes a benchmark module and a pytest test suite.
 ## Project structure
 
 ```text
-QuestAgent/
+Code-Review-Agent/
   src/
     agent.py          # Core chat/review logic (Groq client + conversation history)
     benchmark.py      # Evaluation suite with weighted scoring (0-10,000)

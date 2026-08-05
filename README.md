@@ -1,7 +1,5 @@
 # Code-Review-Agent
 
-> 🔗 **Live demo:** https://iambatman07-code-review-agent.hf.space _(set `GROQ_API_KEY` in Space secrets to activate the agent)_ · [HF Space](https://huggingface.co/spaces/IamBatman07/Code-Review-Agent)
-
 Code-Review-Agent is a specialized AI code review assistant built in Python.
 It reviews pasted code or full files, returns structured findings, and can be used from both:
 

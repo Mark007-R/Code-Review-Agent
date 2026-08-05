@@ -43,7 +43,6 @@ Code-Review-Agent/
     bad_code.py       # Intentionally vulnerable code sample
   requirements.txt
   .env.example
-  cursorrules
 ```
 
 ## Setup

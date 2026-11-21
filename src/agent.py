@@ -21,7 +21,7 @@ if not _API_KEY:
     )
 
 client = Groq(api_key=_API_KEY)
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-120b"
 
 SYSTEM_PROMPT = """You are QuestAgent — an expert AI software quality reviewer with deep knowledge of
 software engineering best practices, security vulnerabilities, and performance optimization.

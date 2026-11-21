@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.agent import chat, review_file, reset_conversation, conversation_history, AgentError
+from src.agent import MODEL, chat, review_file, reset_conversation, conversation_history, AgentError
 
 app = FastAPI(title="QuestAgent UI")
 
@@ -102,4 +102,4 @@ def get_history():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": "llama-3.3-70b-versatile", "provider": "groq"}
+    return {"status": "ok", "model": MODEL, "provider": "groq"}

@@ -22,7 +22,7 @@ The project also includes a benchmark module and a pytest test suite.
 - Groq SDK (`groq`)
 - FastAPI + Uvicorn (web backend/UI serving)
 - python-dotenv (environment loading)
-- pytest + pytest-mock (tests)
+- pytest (tests)
 
 ## Project structure
 
@@ -36,9 +36,12 @@ Code-Review-Agent/
     static/
       index.html      # Frontend UI
   tests/
+    conftest.py       # Sets a dummy GROQ_API_KEY so tests run without a real key
     test_agent.py     # Unit tests for agent + benchmark behavior
+    test_server.py    # HTTP tests for the FastAPI routes
   example/
     bad_code.py       # Intentionally vulnerable code sample
+  pytest.ini          # Puts the repo root on the import path for pytest
   requirements.txt
   .env.example
 ```
@@ -147,7 +150,7 @@ pytest -q
 ### `src/agent.py`
 
 - Initializes Groq client using `GROQ_API_KEY`
-- Uses model: `llama-3.3-70b-versatile`
+- Uses model: `openai/gpt-oss-120b` (the `MODEL` constant; Groq retired `llama-3.3-70b-versatile` for free and developer keys in August 2026)
 - Maintains in-memory `conversation_history`
 - Exposes:
   - `chat(user_message: str) -> str`
@@ -175,8 +178,11 @@ pytest -q
 
 ## Quick troubleshooting
 
-- `KeyError: GROQ_API_KEY`
+- `RuntimeError: GROQ_API_KEY is not set`
   - Add `GROQ_API_KEY` in `.env` and restart the process.
+
+- `model_not_found` from Groq
+  - The model in `MODEL` (`src/agent.py`) is no longer served for your key. Pick a current one from https://console.groq.com/docs/models.
 
 - `ModuleNotFoundError`
   - Reinstall dependencies with `pip install -r requirements.txt` in the active environment.
